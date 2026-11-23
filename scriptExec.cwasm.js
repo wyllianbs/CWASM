@@ -498,7 +498,7 @@
        the file is small (a few KB), so the gain is latency, not avoiding a
        stall. We fetch the script text ourselves and instantiate the Worker
        from a local Blob URL. */
-    const SRC_CACHE_NAME = 'cwasm-src-v7';
+    const SRC_CACHE_NAME = 'cwasm-src-v8';
 
     async function _fetchScriptCached(url) {
         let cache = null;
@@ -694,6 +694,15 @@
 
             case 'done':
                 _onJobDone();
+                break;
+
+            case 'progress':
+                /* Worker download/boot progress → event on the widget's
+                   console; cterminal updates the status bar. */
+                if (cur) {
+                    const el = document.getElementById(cur.consoleId);
+                    if (el) el.dispatchEvent(new CustomEvent('cwasm:progress', { detail: msg }));
+                }
                 break;
 
             case 'needStdin':

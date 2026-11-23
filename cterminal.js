@@ -1563,6 +1563,27 @@ class CTerminalInstance {
             outputScroll.scrollTop = outputScroll.scrollHeight;
         });
         this._consoleObserver.observe(hiddenConsole, { childList: true, subtree: true, characterData: true });
+
+        /* Toolchain download/boot progress (event dispatched by scriptExec on
+           the hidden console) → status bar. Shows the file and percentage, or
+           "cached" when served from cache. */
+        hiddenConsole.addEventListener('cwasm:progress', (e) => {
+            const d = e.detail || {};
+            if (d.phase === 'compile') {
+                this._setStatus('running', '<i class="nf nf-fa-hourglass_2"></i> Compiling…');
+                return;
+            }
+            const name = d.file || '';
+            if (d.cached) {
+                this._setStatus('running', `<i class="nf nf-md-cached"></i> ${name} — cached`);
+            } else if (d.total) {
+                const pct = Math.min(100, Math.round((d.loaded / d.total) * 100));
+                this._setStatus('running', `<i class="nf nf-md-download"></i> Downloading ${name} — ${pct}%`);
+            } else {
+                const mb = (d.loaded / 1048576).toFixed(1);
+                this._setStatus('running', `<i class="nf nf-md-download"></i> Downloading ${name} — ${mb} MB`);
+            }
+        });
     }
 
     /* ── Run compilation ──────────────────────────────────────── */

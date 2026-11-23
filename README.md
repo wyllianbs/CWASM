@@ -66,6 +66,8 @@ Prerequisites (Debian/Ubuntu): `cmake ninja-build build-essential python3 git br
 version; apt clang is only a fallback).
 
 ```bash
+git clone https://github.com/wyllianbs/CWASM.git
+cd CWASM
 ./scripts/install-deps.sh      # resolve LLVM (latest stable) + wasi-libc; fetch sources
 ./scripts/build-toolchain.sh   # produce web/assets/{clang.wasm,lld.wasm,sysroot.tar} (+ .br/.gz, manifest.json)
 ```

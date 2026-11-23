@@ -20,6 +20,7 @@
  *     { id:'compileLinkRun',  data: code, filename, flags, files? }
  *   Worker → Main (via the MessagePort):
  *     { id:'write',    data: string }   // stdout+stderr, written live
+ *     { id:'progress', file, loaded, total } | { file, cached:true } | { phase:'compile' }
  *     { id:'needStdin' }                // program blocked on a stdin read
  *     { id:'done' }                     // job finished
  */
@@ -46,6 +47,11 @@ let TARGET = 'wasm64-wasi';
    (defaultStd field, detected at build time = the newest standard this
    toolchain's clang accepts). Falls back to gnu23 if the manifest omits it. */
 let DEFAULT_STD = 'gnu23';
+/* Uncompressed sizes of the large assets (from the manifest's "sizes"
+   field). Needed for the download percentage: the assets are served with
+   br/gz (Content-Encoding), so Content-Length is the COMPRESSED size while
+   the fetch body reader yields decompressed bytes. */
+let ASSET_SIZES = {};
 let bootPromise = null;
 
 // ── Message wiring ─────────────────────────────────────────────────────────
@@ -80,6 +86,8 @@ function onPortMessage(e) {
 
 function write(text) { if (PORT && text) PORT.postMessage({ id: 'write', data: text }); }
 function finish()    { if (PORT) PORT.postMessage({ id: 'done' }); }
+/* Download/boot progress → the widget's status bar (via scriptExec). */
+function progress(obj) { if (PORT) PORT.postMessage(Object.assign({ id: 'progress' }, obj)); }
 
 // Colorize compiler diagnostics for the terminal's ANSI renderer, using the
 // SAME palette as the binji terminal (wasm/binji): error lines bold red
@@ -110,10 +118,14 @@ async function openCache() {
 
 async function fetchBytes(name) {
     const url = assetUrl(name);
+    // Only the big assets report progress (manifest.json is tiny → no noise).
+    const report = /\.(wasm|tar)$/.test(name);
     const cache = await openCache();
     if (cache) {
-        try { const hit = await cache.match(url); if (hit) return new Uint8Array(await hit.arrayBuffer()); }
-        catch { /* miss */ }
+        try {
+            const hit = await cache.match(url);
+            if (hit) { if (report) progress({ file: name, cached: true }); return new Uint8Array(await hit.arrayBuffer()); }
+        } catch { /* miss */ }
     }
     // Retry a few times — large assets over flaky networks.
     let lastErr;
@@ -121,7 +133,31 @@ async function fetchBytes(name) {
         try {
             const res = await fetch(url);
             if (!res.ok) throw new Error(url + ': HTTP ' + res.status);
-            const bytes = new Uint8Array(await res.arrayBuffer());
+            let bytes;
+            if (report && res.body && res.body.getReader) {
+                // Stream so we can report download progress. The body reader
+                // yields DECOMPRESSED bytes, so the total must be the
+                // uncompressed size (ASSET_SIZES from the manifest); the
+                // Content-Length header is the compressed size here.
+                const total  = ASSET_SIZES[name] || (+res.headers.get('Content-Length')) || 0;
+                const reader = res.body.getReader();
+                const chunks = [];
+                let loaded = 0, last = 0;
+                for (;;) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    chunks.push(value);
+                    loaded += value.length;
+                    const now = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+                    if (now - last > 120) { progress({ file: name, loaded, total }); last = now; }
+                }
+                progress({ file: name, loaded, total });   // final tick → 100%
+                bytes = new Uint8Array(loaded);
+                let off = 0;
+                for (const c of chunks) { bytes.set(c, off); off += c.length; }
+            } else {
+                bytes = new Uint8Array(await res.arrayBuffer());
+            }
             if (cache) { try { await cache.put(url, new Response(bytes)); } catch { /* quota */ } }
             return bytes;
         } catch (e) { lastErr = e; }
@@ -137,14 +173,16 @@ async function boot() {
         const mf = JSON.parse(await fetchText('manifest.json'));
         manifestTarget = mf.target;
         if (mf.defaultStd) DEFAULT_STD = mf.defaultStd;
+        if (mf.sizes) ASSET_SIZES = mf.sizes;
     } catch { /* optional */ }
     if (manifestTarget) TARGET = manifestTarget;
 
-    const [clangBytes, lldBytes, sysrootTar] = await Promise.all([
-        fetchBytes('clang.wasm'),
-        fetchBytes('lld.wasm'),
-        fetchBytes('sysroot.tar'),
-    ]);
+    // Sequential (not Promise.all) so the status bar shows one clear
+    // "Downloading <file> N%" at a time instead of three interleaved.
+    const clangBytes = await fetchBytes('clang.wasm');
+    const lldBytes   = await fetchBytes('lld.wasm');
+    const sysrootTar = await fetchBytes('sysroot.tar');
+    progress({ phase: 'compile' });   // downloads done → "Compiling…"
 
     [clangModule, lldModule] = await Promise.all([
         WebAssembly.compile(clangBytes),

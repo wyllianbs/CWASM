@@ -514,6 +514,18 @@ stage_package() {
         echo "  \"target\": \"$TARGET\","
         echo "  \"llvm\": \"$LLVM_SRC_TAG\","
         echo "  \"defaultStd\": \"$DEFSTD\","
+        # Uncompressed byte sizes → used by the widget to show an accurate
+        # download percentage (assets are served br/gz, so Content-Length is
+        # the compressed size).
+        printf '  "sizes": { '
+        local sfirst=1
+        for f in "$ASSETS_DIR"/clang.wasm "$ASSETS_DIR"/lld.wasm "$ASSETS_DIR"/sysroot.tar; do
+            [ -f "$f" ] || continue
+            [ "$sfirst" -eq 0 ] && printf ', '
+            printf '"%s": %s' "$(basename "$f")" "$(stat -c%s "$f")"
+            sfirst=0
+        done
+        printf ' },\n'
         echo "  \"built\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\","
         echo "  \"assets\": {"
         local first=1

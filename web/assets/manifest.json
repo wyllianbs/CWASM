@@ -2,6 +2,7 @@
   "target": "wasm32-wasi",
   "llvm": "llvmorg-23.1.6",
   "defaultStd": "gnu2y",
+  "sizes": { "clang.wasm": 102067022, "lld.wasm": 64133752, "sysroot.tar": 9984000 },
   "built": "2026-11-22T15:53:31Z",
   "assets": {
     "clang.wasm": "5411d9c328e031d2f07e242bec804199666b00ebdb0e2e36f58fd941699dbd29",
