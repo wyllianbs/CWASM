@@ -126,6 +126,62 @@ Without these headers, nothing compiles.
 
 ---
 
+## Local testing
+
+Serve the **repository root** and open **`/example.html`**. The page references
+`cterminal.css`, `scriptExec.cwasm.js`, etc. as siblings and the worker as
+`web/worker.js`, so everything resolves from the root. Never pass `example.html`
+as a server argument — that turns it into a *router* and every request comes
+back as HTML.
+
+**Render only** (the editor/terminal UI, e.g. for a screenshot) — any static
+server works, no special headers needed:
+```bash
+python3 -m http.server 8080     # then open http://localhost:8080/example.html
+php -S localhost:8080           # (no file argument!)
+npx serve -l 8080
+```
+
+**Compile & Run** needs `crossOriginIsolated` (`SharedArrayBuffer`), so the
+server must also send the COOP/COEP headers above. The plain servers don't — the
+widget renders but won't compile. Use one of:
+
+`router.php` at the repo root, served explicitly (here the router is intentional):
+```php
+<?php
+header('Cross-Origin-Opener-Policy: same-origin');
+header('Cross-Origin-Embedder-Policy: require-corp');
+$p = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+return ($p !== '/' && is_file(__DIR__ . $p)) ? false : true;
+```
+```bash
+php -S localhost:8080 router.php
+```
+
+`coi-serve.py` at the repo root:
+```python
+import http.server, socketserver
+class H(http.server.SimpleHTTPRequestHandler):
+    def end_headers(self):
+        self.send_header('Cross-Origin-Opener-Policy', 'same-origin')
+        self.send_header('Cross-Origin-Embedder-Policy', 'require-corp')
+        super().end_headers()
+socketserver.TCPServer(('127.0.0.1', 8080), H).serve_forever()
+```
+```bash
+python3 coi-serve.py
+```
+
+Notes:
+- `web/assets/{clang.wasm,lld.wasm,sysroot.tar}` must be present (build them or
+  drop them in). The first compile downloads ~160 MB, then it is cached.
+- Check `crossOriginIsolated === true` in the DevTools console; verify the
+  headers with `curl -I http://localhost:8080/example.html | grep -i cross-origin`.
+- VS Code Live Server and `npx http-server` render fine but don't send
+  COOP/COEP, so they won't compile.
+
+---
+
 ## Layout
 
 ```
