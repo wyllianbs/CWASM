@@ -1569,6 +1569,8 @@ class CTerminalInstance {
            "cached" when served from cache. */
         hiddenConsole.addEventListener('cwasm:progress', (e) => {
             const d = e.detail || {};
+            /* Download in progress → keep the run-timeout from firing. */
+            if (this._armRunTimeout) this._armRunTimeout();
             if (d.phase === 'compile') {
                 this._setStatus('running', '<i class="nf nf-fa-hourglass_2"></i> Compiling…');
                 return;
@@ -1624,6 +1626,8 @@ class CTerminalInstance {
         const runObs = new MutationObserver(() => {
             if (!el.hiddenBtn.disabled) {
                 runObs.disconnect();
+                clearTimeout(this._runTimeoutId);
+                this._armRunTimeout = null;
                 const ms = Date.now() - t0;
                 el.outStatus.textContent = ms < 1000 ? `${ms}ms` : `${(ms / 1000).toFixed(1)}s`;
                 el.btnRun.disabled = false;
@@ -1637,13 +1641,23 @@ class CTerminalInstance {
         });
         runObs.observe(el.hiddenBtn, { attributes: true, attributeFilter: ['disabled'] });
 
-        setTimeout(() => {
-            if (el.btnRun.disabled) {
-                runObs.disconnect();
-                el.btnRun.disabled = false;
-                this._setStatus('err', 'Timeout');
-            }
-        }, _timeRunCode);
+        /* Inactivity timeout: each download-progress event resets the
+           countdown (see the cwasm:progress handler in _initCWasm), so a slow
+           FIRST download (the ~166 MB toolchain) is never aborted mid-way. It
+           only fires after _timeRunCode of real silence — no progress and no
+           compile output — which means a genuine hang. */
+        this._armRunTimeout = () => {
+            clearTimeout(this._runTimeoutId);
+            this._runTimeoutId = setTimeout(() => {
+                if (el.btnRun.disabled) {
+                    runObs.disconnect();
+                    this._armRunTimeout = null;
+                    el.btnRun.disabled = false;
+                    this._setStatus('err', 'Timeout');
+                }
+            }, _timeRunCode);
+        };
+        this._armRunTimeout();
     }
 
     /* ── Sepbar ───────────────────────────────────────────────── */
