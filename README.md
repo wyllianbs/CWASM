@@ -74,9 +74,9 @@ The build is **long** (hours, tens of GB of disk) and runs offline. It is fully
 reproducible: `rm -rf .src .build && ./scripts/install-deps.sh` recreates
 everything.
 
-The binaries are **not kept in git** (see `.gitignore`): download them from the
-**Release** and extract into `web/assets/`, or produce them with the build. See
-`web/assets/README.md`.
+The binaries are **not kept in git** (see `.gitignore`): produce them with the
+build above (they land in `web/assets/`), or drop prebuilt binaries there
+yourself. See `web/assets/README.md`.
 
 ---
 
@@ -102,7 +102,7 @@ int main(void) { printf("hello, world\n"); return 0; }
   `-std`, the default from `manifest.json` is used (currently C2Y).
 - Multiple files: add `<script type="text/plain" data-filename="x.h">` / `.c`.
   A complete, structured example is in
-  [`examples/fibonacci.html`](examples/fibonacci.html).
+  [`example.html`](example.html).
 
 `scriptExec.cwasm.js` derives the `web/worker.js` path from its own
 `<script src>`, so the folder can be moved without reconfiguring.
@@ -137,8 +137,8 @@ CWASM/
 ├─ cterminal.js/.css   editor + terminal
 ├─ scriptExec.cwasm.js widget ↔ worker glue
 ├─ execCWASM.js
-├─ examples/
-│  └─ fibonacci.html   multi-file demo (fib.h / fib.c / main.c)
+├─ example.html        self-contained demo (fib.h / fib.c / main.c)
+├─ example.png         screenshot (shown in this README)
 ├─ LICENSE             MIT (first-party code)
 └─ THIRD_PARTY_LICENSES.md   LLVM / wasi-libc (distributed binaries)
 ```

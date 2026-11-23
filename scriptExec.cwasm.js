@@ -110,7 +110,7 @@
 
         const getsRe = /\bgets\s*\(/g;
         while ((m = getsRe.exec(stripped)) !== null) {
-            reads.push({ label: 'gets (linha de texto)', hint: 'string' });
+            reads.push({ label: 'gets (text line)', hint: 'string' });
         }
 
         return reads;
@@ -286,7 +286,7 @@
             var progress = document.createElement('div');
             progress.id = 'cwasm-modal-progress';
             if (total > 1) {
-                progress.textContent = 'Leitura ' + current + ' de ' + total;
+                progress.textContent = 'Input ' + current + ' of ' + total;
             }
 
             var input = document.createElement('input');
@@ -294,9 +294,9 @@
             input.id = 'cwasm-modal-input';
             input.autocomplete = 'off';
             input.spellcheck = false;
-            if (hint && hint.includes('d'))              input.placeholder = 'número inteiro';
-            else if (hint && /lf|f|g/.test(hint))        input.placeholder = 'número decimal';
-            else if (hint && hint.includes('c'))         input.placeholder = 'caractere';
+            if (hint && hint.includes('d'))              input.placeholder = 'integer';
+            else if (hint && /lf|f|g/.test(hint))        input.placeholder = 'decimal number';
+            else if (hint && hint.includes('c'))         input.placeholder = 'character';
             else                                         input.placeholder = 'Input';
 
             body.appendChild(label);
@@ -308,7 +308,7 @@
 
             var btn = document.createElement('button');
             btn.id = 'cwasm-modal-btn';
-            btn.textContent = (total > 1 && current < total) ? 'Próximo →' : 'OK ↵';
+            btn.textContent = (total > 1 && current < total) ? 'Next →' : 'OK ↵';
 
             footer.appendChild(btn);
 
@@ -512,7 +512,7 @@
             cache = null;
         }
         const resp = await fetch(url);
-        if (!resp.ok) throw new Error('HTTP ' + resp.status + ' ao buscar ' + url);
+        if (!resp.ok) throw new Error('HTTP ' + resp.status + ' fetching ' + url);
         const text = await resp.text();
         if (cache) {
             try {
@@ -630,7 +630,7 @@
                     const el  = document.getElementById(cur.consoleId);
                     if (el) {
                         el.innerHTML +=
-                            '<span style="color:#e74c3c">Erro interno no worker: ' +
+                            '<span style="color:#e74c3c">Internal worker error: ' +
                             escapeHtml(e.message || String(e)) + '</span>';
                     }
                     _singleton.current = null;
@@ -664,7 +664,7 @@
              * tick so the channel is established.                        */
             setTimeout(() => onReady(true), 0);
         }).catch(function (e) {
-            console.error('[CWasmExec] Falha ao criar worker:', e);
+            console.error('[CWasmExec] Failed to create worker:', e);
             onReady(false);
         });
         /* NOTE: the Worker is only created here (_ensureWorker), which is
@@ -855,7 +855,7 @@
                     const el = document.getElementById(job.consoleId);
                     if (el) {
                         el.innerHTML =
-                            '<span style="color:#e74c3c">Erro: não foi possível recriar o worker WASM.</span>';
+                            '<span style="color:#e74c3c">Error: could not recreate the WASM worker.</span>';
                     }
                     if (job.onDone) job.onDone();
                     /* Segue tentando os demais jobs */
@@ -913,7 +913,7 @@
                 const el = document.getElementById(consoleId);
                 if (el) {
                     el.innerHTML =
-                        '<span style="color:#e74c3c">Erro: não foi possível carregar o worker WASM.</span>';
+                        '<span style="color:#e74c3c">Error: could not load the WASM worker.</span>';
                 }
                 if (onDone) onDone();
                 return;
@@ -1055,7 +1055,7 @@
 
                     if (!code || !code.trim()) {
                         document.getElementById(consoleId).innerHTML =
-                            '<span style="color:#f39c12">Nenhum código encontrado.</span>';
+                            '<span style="color:#f39c12">No code found.</span>';
                         return;
                     }
 
@@ -1105,7 +1105,7 @@
 
         setWorkerPath: function (path) {
             WORKER_PATH = path;
-            /* Reinicia o singleton ao mudar de caminho */
+            /* Restart the singleton when the path changes */
             if (_singleton.worker) {
                 try { _singleton.worker.terminate(); } catch (_) {}
                 _singleton.worker = null;

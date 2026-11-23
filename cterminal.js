@@ -687,7 +687,7 @@ class CTerminalInstance {
   <div id="${id('consoleHidden')}"></div>
 </div>`;
 
-        /* ── Shortcuts overlay no <body> ─────────────────────── */
+        /* ── Shortcuts overlay in the <body> ─────────────────── */
         {
             const _ov = document.createElement('div');
             _ov.id = id('shortcuts-overlay');
@@ -1027,7 +1027,7 @@ class CTerminalInstance {
             }
         }
 
-        /* Fallback — data-fullscreen ou sem data-editor-lines */
+        /* Fallback — data-fullscreen or without data-editor-lines */
         if (hlH === 0) {
             const lhReal     = this._lhPx || (this._currentFz * _LH);
             const nReal      = this._nLines || hlLayer.querySelectorAll('.hl-line').length || 1;
@@ -1860,7 +1860,7 @@ class CTerminalInstance {
                 </div>
                 <div style="padding:10px 12px;font-size:11px;font-family:var(--font-editor);
                      color:var(--text-muted);font-style:italic;">
-                  Solte em uma zona para reposicionar…
+                  Drop on a zone to reposition…
                 </div>`;
             document.body.appendChild(ghost);
             pane.classList.add('ct-pane-dragging');
@@ -2206,7 +2206,7 @@ class CTerminalInstance {
             el.outStatus.textContent = '';
         });
 
-        /* Shortcuts — popup flutuante */
+        /* Shortcuts — floating popup */
         el.btnShortcuts.addEventListener('click', () => {
             const ov  = el.shortcutsOverlay;
             const btn = el.btnShortcuts.getBoundingClientRect();

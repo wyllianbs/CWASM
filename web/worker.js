@@ -57,7 +57,7 @@ self.onmessage = function (e) {
     BASE = m.baseUrl || self.location.href;
     PORT.onmessage = onPortMessage;
     bootPromise = boot().catch((err) => {
-        writeErr('Erro ao carregar o toolchain: ' + (err && err.message || err) + '\n');
+        writeErr('Error loading the toolchain: ' + (err && err.message || err) + '\n');
     });
 };
 
@@ -542,7 +542,7 @@ function targetArch() { return TARGET === 'wasm64-wasi' ? 'wasm64' : 'wasm32'; }
 
 async function compileLinkRun(code, filename, flags, files) {
     if (bootPromise) await bootPromise;
-    if (!clangModule || !lldModule || !sysrootFiles) { writeErr('Toolchain não carregado.\n'); finish(); return; }
+    if (!clangModule || !lldModule || !sysrootFiles) { writeErr('Toolchain not loaded.\n'); finish(); return; }
 
     const arch = targetArch();
     const libdir = '/sysroot/lib/' + TARGET;
@@ -598,7 +598,7 @@ async function compileLinkRun(code, filename, flags, files) {
         const crc = await runModule(clangModule, clangArgs, env, fs, (s) => write(s), (s) => { cerr += s; }, { bits64: false });
         if (cerr) write(colorizeDiag(cerr));   // warnings (gray) even on success
         if (crc !== 0 || !fs.readFile(objPath)) {
-            if (!cerr) writeErr('Falha na compilação de ' + sp.replace(/^\/work\//, '') + ' (código ' + crc + ').\n');
+            if (!cerr) writeErr('Compilation of ' + sp.replace(/^\/work\//, '') + ' failed (code ' + crc + ').\n');
             finish(); return;
         }
         objPaths.push(objPath);
@@ -620,14 +620,14 @@ async function compileLinkRun(code, filename, flags, files) {
     const lrc = await runModule(lldModule, lldArgs, env, fs, (s) => write(s), (s) => { lerr += s; }, { bits64: false });
     if (lerr) write(colorizeDiag(lerr));
     if (lrc !== 0 || !fs.readFile(wasmPath)) {
-        if (!lerr) writeErr('Falha na ligação (código ' + lrc + ').\n');
+        if (!lerr) writeErr('Linking failed (code ' + lrc + ').\n');
         finish(); return;
     }
 
     // 3) Run the student's wasm64 program (memory64 → bits64 WASI host)
     let module;
     try { module = await WebAssembly.compile(fs.readFile(wasmPath)); }
-    catch (e) { writeErr('Não foi possível carregar o programa: ' + e.message + '\n'); finish(); return; }
+    catch (e) { writeErr('Could not load the program: ' + e.message + '\n'); finish(); return; }
 
     const runFs = new MemFS(); runFs.mkdirp('/tmp');
     try {

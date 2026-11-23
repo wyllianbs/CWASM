@@ -1,14 +1,14 @@
 /* ═══════════════════════════════════════════════════════════
-   CTerminal — estilos compartilhados
-   Suporta dois modos:
-     1. Standalone  (#app)      — cterminal.html, página inteira
-     2. Embarcado   (.ct-widget)— index.html, dentro de slides
+   CTerminal — shared styles
+   Supports two modes:
+     1. Standalone  (#app)      — cterminal.html, full page
+     2. Embedded    (.ct-widget)— index.html, inside slides
 ═══════════════════════════════════════════════════════════ */
 
 /* ── Reset base ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* ── Design tokens (podem ser sobrescritos por herança) ── */
+/* ── Design tokens (can be overridden by inheritance) ── */
 :root {
     --blue:        #003893;
     --blue-mid:    #1251b5;
@@ -56,8 +56,8 @@
 }
 
 /* ════════════════════════════════════════════════════════
-   MODO STANDALONE — cterminal.html
-   html/body ocupam 100% da viewport
+   STANDALONE MODE — cterminal.html
+   html/body take up 100% of the viewport
 ═══════════════════════════════════════════════════════════ */
 html, body {
     height: 100%;
@@ -69,34 +69,34 @@ html, body {
     -webkit-font-smoothing: antialiased;
 }
 
-/* ── Grid principal standalone ── */
+/* ── Main standalone grid ── */
 #app {
     display: flex;
     flex-direction: column;
     height: 100vh;
-    height: 100dvh;   /* mobile: viewport dinâmico (barra de URL) */
+    height: 100dvh;   /* mobile: dynamic viewport (URL bar) */
     width: 100vw;
     width: 100dvw;
     overflow: hidden;
 }
 
-/* Oculta elemento interno do CWasmExec */
+/* Hide CWasmExec's internal element */
 #cwasm-modal-label { display: none !important; }
 
 /* ════════════════════════════════════════════════════════
-   WIDGET EMBARCADO (.ct-widget)
-   O container pai define o tamanho; o widget preenche 100%.
+   EMBEDDED WIDGET (.ct-widget)
+   The parent container defines the size; the widget fills 100%.
 ═══════════════════════════════════════════════════════════ */
 .ct-widget {
     display: flex;
     flex-direction: column;
     width:  100%;
     height: 100%;
-    /* min-width:0 permite o widget encolher abaixo da largura
-       intrínseca do conteúdo, respeitando o container em QUALQUER
-       layout (grid ou flex). Sem isto, dentro de um grid a coluna
-       'auto' dimensiona-se pelo conteúdo e o widget transborda na
-       horizontal. max-width:100% garante o teto no container. */
+    /* min-width:0 lets the widget shrink below the content's intrinsic
+       width, respecting the container in ANY layout (grid or flex).
+       Without it, inside a grid the 'auto' column sizes to the content
+       and the widget overflows horizontally. max-width:100% enforces the
+       container as the ceiling. */
     min-width: 0;
     max-width: 100%;
     overflow: hidden;
@@ -108,11 +108,11 @@ html, body {
 
 
 /* ════════════════════════════════════════════════════════
-   CONTAINER EMBARCADO (.cterminal)
-   É o elemento que recebe a classe no HTML e é o filho direto
-   do layout do slide (grid/flex). Precisa de min-width:0 para
-   não estourar a coluna 'auto' de um grid — sem isto, o JS mede
-   um offsetWidth já inflado e dimensiona o editor grande demais.
+   EMBEDDED CONTAINER (.cterminal)
+   The element that receives the class in the HTML and is the direct
+   child of the slide layout (grid/flex). It needs min-width:0 so it
+   does not overflow a grid's 'auto' column — without it, the JS measures
+   an already-inflated offsetWidth and sizes the editor too large.
 ═══════════════════════════════════════════════════════════ */
 .cterminal {
     min-width: 0;
@@ -125,7 +125,7 @@ html, body {
 
 
 /* ════════════════════════════════════════════════════════
-   TOOLBAR  — vale para #toolbar (standalone) e .ct-toolbar (embarcado)
+   TOOLBAR  — applies to #toolbar (standalone) and .ct-toolbar (embedded)
 ═══════════════════════════════════════════════════════════ */
 #toolbar,
 .ct-toolbar {
@@ -220,7 +220,7 @@ html, body {
     margin: 0 2px;
 }
 
-/* Font size control — toolbar (fundo azul) */
+/* Font size control — toolbar (blue background) */
 .tb-fz,
 .ct-tb-fz {
     display: flex;
@@ -254,7 +254,7 @@ html, body {
     text-align: center;
 }
 
-/* Font size control — pane-header (fundo cinza, override das cores acima) */
+/* Font size control — pane-header (gray background, overrides the colors above) */
 .ct-editor-pane-header .ct-tb-fz {
     background: none;
     border-color: var(--border-mid);
@@ -308,30 +308,30 @@ html, body {
     display: flex;
     flex-direction: column;
     min-width: 200px;
-    min-height: 0;        /* permite encolher em layout vertical */
+    min-height: 0;        /* allows shrinking in vertical layout */
     overflow: hidden;
     background: var(--bg-editor);
     border-right: 1px solid var(--border);
-    flex-shrink: 0;       /* no layout horizontal, não encolhe (width é controlado) */
+    flex-shrink: 0;       /* in horizontal layout, don't shrink (width is controlled) */
 }
 
-/* Em layout vertical (top/bottom), o editor-pane deve participar
-   do flex vertical e ter border-bottom em vez de border-right */
+/* In vertical layout (top/bottom), the editor-pane must take part in the
+   vertical flex and have border-bottom instead of border-right */
 .ct-workspace[style*="column"] .ct-editor-pane {
     border-right: none;
     border-bottom: 1px solid var(--border);
-    flex-shrink: 1;       /* pode encolher verticalmente */
-    flex-grow: 1;         /* ocupa o espaço restante após o output-pane */
-    min-height: 0;        /* permite encolher abaixo do conteúdo intrínseco */
-    width: 100% !important; /* em layout vertical o editor deve ter largura total */
+    flex-shrink: 1;       /* may shrink vertically */
+    flex-grow: 1;         /* takes the remaining space after the output-pane */
+    min-height: 0;        /* allows shrinking below the intrinsic content */
+    width: 100% !important; /* in vertical layout the editor must be full width */
 }
 
-/* editor-scroll precisa de height:0 no modo vertical para que o flex
-   distribua corretamente e o código fique visível */
+/* editor-scroll needs height:0 in vertical mode so the flex distributes
+   correctly and the code stays visible */
 .ct-workspace[style*="column"] .ct-editor-pane .ct-editor-scroll {
     flex: 1;
     min-height: 0;
-    height: 0;            /* força o flexbox a calcular a altura disponível */
+    height: 0;            /* forces flexbox to compute the available height */
     overflow: auto;
 }
 
@@ -369,7 +369,7 @@ html, body {
 }
 .ct-editor-pane-header .ct-dot .ct-icon-term {
     font-size: 13px;
-    color: inherit;   /* herda a cor do .ct-dot pai — muda com .edited */
+    color: inherit;   /* inherits the color of the parent .ct-dot — changes with .edited */
 }
 #editor-pane-header .dot.edited,
 .ct-editor-pane-header .ct-dot.edited { color: #f59e0b; }
@@ -377,7 +377,7 @@ html, body {
 #editor-filename,
 .ct-editor-filename { font-weight: 600; color: var(--text-main); font-size: 12px; }
 
-/* ── File tree (multi-arquivo) ── */
+/* ── File tree (multi-file) ── */
 .ct-filetree-wrap {
     position: relative;
     display: inline-flex;
@@ -613,8 +613,8 @@ html, body {
     position: sticky;
     left: 0;
     z-index: 2;
-    overflow: visible;      /* scroll nativo do editorScroll, sem sync via JS */
-    align-self: flex-start; /* não estica verticalmente — altura definida pelo JS */
+    overflow: visible;      /* native editorScroll scroll, no JS sync */
+    align-self: flex-start; /* don't stretch vertically — height set by JS */
 }
 .gutter-line {
     padding: 0 10px 0 4px;
@@ -674,13 +674,13 @@ html, body {
     height: 100%;
     z-index: 1;
 }
-/* Seleção: o texto do <textarea> é transparente (a cor visível vem da
-   highlight-layer abaixo). Por padrão o browser repinta o texto selecionado
-   com a cor de seleção do sistema (escura), revelando uma "cópia fantasma"
-   desalinhada do código. Forçamos o texto selecionado a permanecer
-   transparente e mostramos apenas um fundo de seleção legível, que se
-   sobrepõe à camada colorida — assim vê-se claramente o que está selecionado
-   sem alterar o que é renderizado. */
+/* Selection: the <textarea> text is transparent (the visible color comes
+   from the highlight-layer below). By default the browser repaints selected
+   text with the system selection color (dark), revealing a "ghost copy"
+   misaligned with the code. We force the selected text to stay transparent
+   and show only a readable selection background, which overlays the colored
+   layer — so you clearly see what is selected without changing what is
+   rendered. */
 #code-input::selection,
 .ct-code-input::selection {
     background: rgba(0,86,224,0.28);
@@ -693,8 +693,9 @@ html, body {
     color: transparent;
     -webkit-text-fill-color: transparent;
 }
-/* Espelha a mesma seleção na highlight-layer para reforçar o realce visual
-   (o texto colorido sob a seleção fica levemente destacado, mas legível). */
+/* Mirror the same selection on the highlight-layer to reinforce the visual
+   highlight (the colored text under the selection is slightly emphasized but
+   still readable). */
 .ct-highlight-layer ::selection   { background: rgba(0,86,224,0.28); }
 .ct-highlight-layer ::-moz-selection { background: rgba(0,86,224,0.28); }
 
@@ -712,7 +713,7 @@ html, body {
     flex-direction: column;
     flex: 1;
     min-width: 160px;
-    min-height: 0;        /* essencial: permite que o scroll interno funcione */
+    min-height: 0;        /* essential: lets the inner scroll work */
     overflow: hidden;
     background: var(--bg-output);
 }
@@ -810,11 +811,11 @@ html, body {
 #output-scroll,
 .ct-output-scroll {
     flex: 1;
-    overflow: auto;       /* scroll vertical e horizontal */
+    overflow: auto;       /* vertical and horizontal scroll */
     padding: 14px 18px 18px;
-    min-height: 0;        /* crítico: sem isto o flex child ignora o overflow */
+    min-height: 0;        /* critical: without it the flex child ignores overflow */
     min-width: 0;
-    outline: none;        /* sem borda de foco — tabindex=0 apenas para capturar Alt+= */
+    outline: none;        /* no focus border — tabindex=0 only to capture Alt+= */
 }
 
 #console-out,
@@ -823,9 +824,9 @@ html, body {
     font-size: var(--terminal-fs);
     line-height: 1.65;
     color: var(--text-output);
-    white-space: pre;     /* preserva formatação; scroll horizontal para linhas longas */
+    white-space: pre;     /* preserve formatting; horizontal scroll for long lines */
     word-break: normal;
-    min-width: max-content; /* garante scroll horizontal quando necessário */
+    min-width: max-content; /* ensures horizontal scroll when needed */
 }
 #console-out:empty::before,
 .ct-console-out:empty::before {
@@ -892,11 +893,11 @@ html, body {
 .tk-op       { color: var(--syn-op); }
 
 /* ════════════════════════════════════════════════════════
-   MODO EMBARCADO em slides (Reveal.js)
-   .ct-slide-container preenche 100% do pai — qualquer que
-   seja ele. O pai deve ter altura definida (via CSS da
-   aplicação, como .containerflexcenter). Nenhum height
-   inline é definido pelo JS.
+   EMBEDDED MODE in slides (Reveal.js)
+   .ct-slide-container fills 100% of the parent — whatever it
+   is. The parent must have a defined height (via the app's
+   CSS, such as .containerflexcenter). No inline height is set
+   by the JS.
 ═══════════════════════════════════════════════════════════ */
 .ct-slide-container {
     width:    100%;
@@ -914,10 +915,10 @@ html, body {
 }
 
 /* ════════════════════════════════════════════════════════
-   DRAG-TO-SNAP — handles e zonas de encaixe
+   DRAG-TO-SNAP — handles and snap zones
 ═══════════════════════════════════════════════════════════ */
 
-/* Handle de arrasto nos headers dos painéis */
+/* Drag handle in the panel headers */
 .ct-drag-handle {
     display: flex;
     align-items: center;
@@ -941,7 +942,7 @@ html, body {
 }
 .ct-drag-handle:active { cursor: grabbing; }
 
-/* Ghost — cópia semitransparente que segue o mouse */
+/* Ghost — semi-transparent copy that follows the mouse */
 .ct-drag-ghost {
     position: fixed;
     pointer-events: none;
@@ -958,7 +959,7 @@ html, body {
     box-shadow: 0 0 0 3px var(--blue-mid), 0 8px 32px rgba(0,56,147,0.3);
 }
 
-/* Zonas de snap — overlay sobre o workspace durante o drag */
+/* Snap zones — overlay on top of the workspace during drag */
 .ct-snap-overlay {
     position: absolute;
     inset: 0;
@@ -974,7 +975,7 @@ html, body {
     transition: opacity 0.15s, background 0.15s;
     opacity: 0;
 }
-/* Ícone central de cada zona */
+/* Central icon of each zone */
 .ct-snap-zone::after {
     content: '';
     width: 36px;
@@ -993,7 +994,7 @@ html, body {
     opacity: 1;
     transform: scale(1);
 }
-/* Zonas nas 4 bordas */
+/* Zones on the 4 edges */
 .ct-snap-zone[data-zone="left"]   { left:0;   top:0; width:22%; height:100%; border-right: 2px dashed transparent; }
 .ct-snap-zone[data-zone="right"]  { right:0;  top:0; width:22%; height:100%; border-left:  2px dashed transparent; }
 .ct-snap-zone[data-zone="top"]    { top:0;    left:0; width:100%; height:22%; border-bottom:2px dashed transparent; }
@@ -1003,7 +1004,7 @@ html, body {
 .ct-snap-zone.hover[data-zone="top"]    { border-bottom-color: var(--blue-mid); background: rgba(0,87,231,0.18); }
 .ct-snap-zone.hover[data-zone="bottom"] { border-top-color:    var(--blue-mid); background: rgba(0,87,231,0.18); }
 
-/* Tooltip de zona */
+/* Zone tooltip */
 .ct-snap-zone-label {
     position: absolute;
     left: 50%; top: 50%;
@@ -1023,7 +1024,7 @@ html, body {
 }
 .ct-snap-zone.hover .ct-snap-zone-label { opacity: 1; }
 
-/* Indicador de posição no header do painel durante drag */
+/* Position indicator in the panel header during drag */
 .ct-pane-dragging {
     outline: 2px solid var(--blue-mid);
     outline-offset: -2px;
@@ -1050,7 +1051,7 @@ html, body {
 }
 
 /* ════════════════════════════════════════════════════════
-   SHORTCUTS MODAL (popup flutuante ancorado no body)
+   SHORTCUTS MODAL (floating popup anchored to the body)
 ═══════════════════════════════════════════════════════════ */
 .ct-shortcuts-modal {
     background: var(--bg-editor);
@@ -1133,10 +1134,10 @@ html, body {
 
 /* ════════════════════════════════════════════════════════
    DATA-FULLSCREEN
-   O container não tem altura fixada pelo JS — cresce para
-   preencher o espaço disponível (ex: height:100% do slide).
-   O ct-widget ocupa 100% e o editor-pane usa flex:1 para
-   tomar todo o espaço restante após toolbar e statusbar.
+   The container has no height fixed by the JS — it grows to
+   fill the available space (e.g. height:100% of the slide).
+   The ct-widget takes 100% and the editor-pane uses flex:1 to
+   take all remaining space after the toolbar and statusbar.
 ═══════════════════════════════════════════════════════════ */
 .cterminal[data-fullscreen] {
     height: 100%;
@@ -1146,14 +1147,14 @@ html, body {
 .cterminal[data-fullscreen] .ct-widget {
     height: 100%;
 }
-/* Layout vertical (top/bottom): editor-pane cresce para preencher */
+/* Vertical layout (top/bottom): editor-pane grows to fill */
 .cterminal[data-fullscreen] .ct-workspace[style*="column"] .ct-editor-pane {
     flex: 1;
     min-height: 0;
     min-width: 0;
 }
-/* Layout horizontal (left/right): JS controla a largura via style.width;
-   flex-shrink:0 garante que o width do JS não seja sobrescrito pelo flexbox */
+/* Horizontal layout (left/right): JS controls the width via style.width;
+   flex-shrink:0 ensures the JS width is not overridden by flexbox */
 .cterminal[data-fullscreen] .ct-workspace:not([style*="column"]) .ct-editor-pane {
     flex-shrink: 0;
     flex-grow: 0;
@@ -1168,12 +1169,12 @@ html, body {
 
 /* ════════════════════════════════════════════════════════
    MOBILE
-   IMPORTANTE: estas regras valem APENAS para o modo
-   standalone (#app / seletores por ID). Widgets embarcados
-   em slides do Reveal.js (.ct-*) são escalados junto com o
-   slide (transform: scale) e NÃO devem receber unidades de
-   viewport (55vh dentro de um slide escalado ≈ 1800px em
-   coordenadas de slide) nem mudança de direção do layout.
+   IMPORTANT: these rules apply ONLY to standalone mode
+   (#app / ID selectors). Widgets embedded in Reveal.js slides
+   (.ct-*) are scaled along with the slide (transform: scale)
+   and must NOT receive viewport units (55vh inside a scaled
+   slide ≈ 1800px in slide coordinates) nor a change of layout
+   direction.
 ═══════════════════════════════════════════════════════════ */
 @media (max-width: 640px) {
     #app { --editor-fs: 16px; --terminal-fs: 16px; --gutter-w: 40px; }

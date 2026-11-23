@@ -9,8 +9,8 @@ This folder is **populated by the build** — the binaries are not tracked in gi
 ./scripts/build-toolchain.sh   # produce the binaries below (long: hours, tens of GB)
 ```
 
-### Option B — download the prebuilt binaries
-Download the attachments from the matching **GitHub Release** and extract them here.
+### Option B — use prebuilt binaries
+Place prebuilt `clang.wasm`, `lld.wasm`, `sysroot.tar` (and their `.br`/`.gz`) here.
 
 ## Expected files
 | file | what it is |
