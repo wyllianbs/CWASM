@@ -407,6 +407,18 @@ if (typeof window !== 'undefined' && window.addEventListener) {
         document.querySelectorAll('.ct-lang-badge[data-std-default="1"]')
             .forEach(function (b) { b.textContent = label; });
     });
+
+    /* Toolchain pre-warm broadcast on page load (no active run): the worker
+       boots and scriptExec dispatches progress on window. Reflect it on every
+       idle widget's status bar so the student sees the toolchain being
+       prepared and knows when the first click will be instant. */
+    window.addEventListener('cwasm:progress', function (e) {
+        const d = (e && e.detail) || {};
+        const list = (typeof CTerminal !== 'undefined' && CTerminal._instances) || [];
+        list.forEach(function (inst) {
+            try { inst._showWarmupStatus(d); } catch (_) { /* noop */ }
+        });
+    });
 }
 
 class CTerminalInstance {
@@ -1192,6 +1204,24 @@ class CTerminalInstance {
         this._el.statusMsg.className  = cls;
     }
 
+    /* Status bar during the page-load toolchain pre-warm (no active run).
+       Skipped while a run owns the status bar (btnRun disabled). */
+    _showWarmupStatus(d) {
+        if (!this._el || !this._el.statusMsg) return;
+        if (this._el.btnRun && this._el.btnRun.disabled) return;   // a run owns the bar
+        if (d.phase === 'ready') {
+            this._setStatus('ok', '<i class="nf nf-fa-circle_check"></i> Ready');
+        } else if (d.phase === 'compile') {
+            this._setStatus('running', '<i class="nf nf-fa-hourglass_2"></i> Preparing…');
+        } else if (d.cached) {
+            this._setStatus('running', `<i class="nf nf-md-cached"></i> ${d.file || ''} — cached`);
+        } else if (d.file) {
+            const pct = d.total ? Math.min(100, Math.round((d.loaded / d.total) * 100)) : null;
+            const amt = (pct != null) ? `${pct}%` : `${(d.loaded / 1048576).toFixed(1)} MB`;
+            this._setStatus('running', `<i class="nf nf-md-download"></i> Downloading ${d.file} — ${amt}`);
+        }
+    }
+
     /* ── Hourglass animation ──────────────────────────────────── */
     _startHourglassAnimation(el, duration, interval = 300) {
         const frames = [
@@ -1571,7 +1601,7 @@ class CTerminalInstance {
             const d = e.detail || {};
             /* Download in progress → keep the run-timeout from firing. */
             if (this._armRunTimeout) this._armRunTimeout();
-            if (d.phase === 'compile') {
+            if (d.phase === 'compile' || d.phase === 'ready') {
                 this._setStatus('running', '<i class="nf nf-fa-hourglass_2"></i> Compiling…');
                 return;
             }

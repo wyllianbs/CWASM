@@ -697,11 +697,15 @@
                 break;
 
             case 'progress':
-                /* Worker download/boot progress → event on the widget's
-                   console; cterminal updates the status bar. */
+                /* Worker download/boot progress → status bar. During a run it
+                   goes to the active widget's console; during page-load warmup
+                   (no active job) it is broadcast on window so idle widgets can
+                   show it (cterminal listens on both). */
                 if (cur) {
                     const el = document.getElementById(cur.consoleId);
                     if (el) el.dispatchEvent(new CustomEvent('cwasm:progress', { detail: msg }));
+                } else {
+                    try { window.dispatchEvent(new CustomEvent('cwasm:progress', { detail: msg })); } catch (e) {}
                 }
                 break;
 
@@ -996,10 +1000,20 @@
     var WORKER_PATH   = resolveWorkerPath();
     var USE_ANIMATION = hasAnimationFlag();
 
-    /* Fires as soon as the script loads — waits for neither
-       DOMContentLoaded nor the "Compile & Run" click (same pattern as
-       Pyodide, see the note above in _preloadBinCache). */
-    _preloadBinCache(WORKER_PATH);
+    /* Pre-warm on page load: create the singleton worker and let it boot
+       (download + compile the toolchain) BEFORE the first click, so the first
+       "Compile & Run" is instant. Fires as soon as the script loads (same
+       eager pattern as Pyodide). Progress is shown on the widgets' status bars
+       via window 'cwasm:progress' events (no active job during warmup →
+       _handleSingletonMessage broadcasts on window). The worker stays alive
+       (idle) until the first run; afterwards it is recreated as usual, hitting
+       the now-warm cache. Replaces the old cache-only _preloadBinCache (single
+       download, no double-fetch). */
+    function _prewarmWorker(workerPath) {
+        if (_singleton.worker) return;
+        _ensureWorker(workerPath, function () { /* created; it boots on its own */ });
+    }
+    _prewarmWorker(WORKER_PATH);
 
     /* Reads the default C standard from the toolchain manifest (defaultStd
        field, detected at build time = the newest standard clang accepts)

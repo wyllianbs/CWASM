@@ -189,6 +189,7 @@ async function boot() {
         WebAssembly.compile(lldBytes),
     ]);
     sysrootFiles = extractTar(sysrootTar);
+    progress({ phase: 'ready' });   // toolchain downloaded + compiled → ready
 }
 
 // ── TAR extraction (ustar, regular files + dirs) ───────────────────────────
