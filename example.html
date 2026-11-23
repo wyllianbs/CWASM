@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CWASM — example: Fibonacci (multi-file)</title>
+
+  <!--
+    This page must be served with COOP/COEP (crossOriginIsolated), otherwise
+    SharedArrayBuffer is blocked and nothing compiles:
+        Cross-Origin-Opener-Policy:   same-origin
+        Cross-Origin-Embedder-Policy: require-corp   (or credentialless)
+    On GitHub Pages, inject the headers on the client with a coi-serviceworker.
+  -->
+
+  <!-- CWASM public layer (paths relative to examples/). scriptExec derives
+       ../web/worker.js from its own <script src>. execCWASM.js is loaded at
+       the end of <body> (it must run after the .cterminal markup exists). -->
+  <link rel="stylesheet" href="cterminal.css">
+  <script src="scriptExec.cwasm.js"></script>
+  <script src="cterminal.js"></script>
+
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 1180px; margin: 2rem auto; padding: 0 1rem; }
+    h1 { font-size: 1.4rem; }
+    .cterminal { width: 100%; box-sizing: border-box; }
+    p  { color: #444; }
+  </style>
+  <!-- Nerd Font icons (toolbar/status glyphs): a subset of the Hack Nerd Font
+       Symbols set covering only the ~24 glyphs this widget uses, base64-inlined
+       so the example stays self-contained (no extra font files). -->
+  <style id="cwasm-icons">
+    @font-face{font-family:"NerdFontsSymbols Nerd Font";font-style:normal;font-weight:normal;
+      src:url("data:font/woff2;base64,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") format("woff2");}
+    .nf{font-family:"NerdFontsSymbols Nerd Font";font-style:normal;font-weight:normal;
+      font-variant:normal;text-transform:none;line-height:1;display:inline-block;
+      -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}
+    .nf-custom-c:before{content:"\e61e"}
+    .nf-dev-c:before{content:"\e771"}
+    .nf-dev-wasm:before{content:"\e8e0"}
+    .nf-fa-circle_check:before{content:"\f05d"}
+    .nf-fa-circle_xmark:before{content:"\f05c"}
+    .nf-fa-ellipsis_vertical:before{content:"\f142"}
+    .nf-fa-gear:before{content:"\f013"}
+    .nf-fa-hourglass_1:before{content:"\f251"}
+    .nf-fa-hourglass_2:before{content:"\f252"}
+    .nf-fa-hourglass_3:before{content:"\f253"}
+    .nf-fa-hourglass_end:before{content:"\f253"}
+    .nf-fa-hourglass_start:before{content:"\f251"}
+    .nf-fa-microchip:before{content:"\f2db"}
+    .nf-md-broom:before{content:"\f00e2"}
+    .nf-md-check:before{content:"\f012c"}
+    .nf-md-close:before{content:"\f0156"}
+    .nf-md-content_copy:before{content:"\f018f"}
+    .nf-md-drag:before{content:"\f01db"}
+    .nf-md-file_tree:before{content:"\f0645"}
+    .nf-md-folder:before{content:"\f024b"}
+    .nf-md-format_list_numbered:before{content:"\f027b"}
+    .nf-md-keyboard:before{content:"\f030c"}
+    .nf-md-pencil:before{content:"\f03eb"}
+    .nf-md-plus:before{content:"\f0415"}
+    .nf-md-restore:before{content:"\f099b"}
+    .nf-oct-terminal:before{content:"\f489"}
+  </style>
+</head>
+<body>
+  <h1>Fibonacci in C — structured project (.h / .c / main.c)</h1>
+  <p>
+    Three files: <code>fib.h</code> (interface), <code>fib.c</code> (iterative
+    implementation) and <code>main.c</code>. Edit and click
+    <em>Compile &amp; Run</em>.
+  </p>
+
+  <div class="cterminal" data-filename="main.c" data-terminal-position="right"
+       data-editor-lines="15" data-cflags="-Wall -Wextra">
+
+    <script type="text/plain">
+#include <stdio.h>
+#include "fib.h"
+
+#define N 10   /* how many terms to print */
+
+int main(void) {
+    printf("Fibonacci sequence (first %d terms):\n", N);
+    
+    for (unsigned i = 0; i < N; i++) {
+        printf("fib(%2u) = %llu\n", i, fib(i));
+    }
+    
+    return 0;
+}
+// f=main; gcc *.c -o $f -std=c23 -Wall -Wextra; ./$f
+    </script>
+
+    <script type="text/plain" data-filename="fib.h">
+/* fib.h — interface of the Fibonacci module */
+#ifndef FIB_H
+#define FIB_H
+
+/* Returns the n-th Fibonacci number (fib(0)=0, fib(1)=1). */
+unsigned long long fib(unsigned n);
+
+#endif /* FIB_H */
+    </script>
+
+    <script type="text/plain" data-filename="fib.c">
+/* fib.c — iterative implementation (O(n), no recursion) */
+#include "fib.h"
+
+unsigned long long fib(unsigned n) {
+    unsigned long long a = 0, b = 1;
+    for (unsigned i = 0; i < n; i++) {
+        unsigned long long next = a + b;
+        a = b;
+        b = next;
+    }
+    return a;
+}
+    </script>
+  </div>
+
+  <!-- Instantiates every .cterminal on the page. Must come after the markup
+       above and after cterminal.js. -->
+  <script src="execCWASM.js"></script>
+</body>
+</html>

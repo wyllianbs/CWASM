@@ -1,0 +1,11 @@
+{
+  "target": "wasm32-wasi",
+  "llvm": "llvmorg-23.1.6",
+  "defaultStd": "gnu2y",
+  "built": "2026-11-22T15:53:31Z",
+  "assets": {
+    "clang.wasm": "5411d9c328e031d2f07e242bec804199666b00ebdb0e2e36f58fd941699dbd29",
+    "lld.wasm": "4dd5c05715c7f0adc9185d3b7336e0ac72719d19d9b342ae7ec4a94b65dce86e",
+    "sysroot.tar": "512883fc8b4453a602cc777652847278fa856d23f3b48a2bf07913c3837d89c6"
+  }
+}

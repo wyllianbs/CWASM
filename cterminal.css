@@ -1,0 +1,1188 @@
+/* ═══════════════════════════════════════════════════════════
+   CTerminal — estilos compartilhados
+   Suporta dois modos:
+     1. Standalone  (#app)      — cterminal.html, página inteira
+     2. Embarcado   (.ct-widget)— index.html, dentro de slides
+═══════════════════════════════════════════════════════════ */
+
+/* ── Reset base ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── Design tokens (podem ser sobrescritos por herança) ── */
+:root {
+    --blue:        #003893;
+    --blue-mid:    #1251b5;
+    --blue-light:  #dce8ff;
+    --blue-pale:   #f0f4ff;
+    --accent:      #0057e7;
+
+    --bg-page:     #f5f6fa;
+    --bg-editor:   #ffffff;
+    --bg-gutter:   #f0f2f8;
+    --bg-toolbar:  #003893;
+    --bg-output:   #f1f0ff; 
+    --bg-status:   #eef1f9;
+
+    --border:      #c8d3ee;
+    --border-mid:  #a0b0d8;
+
+    --text-main:   #1a1e2e;
+    --text-gutter: #8894b8;
+    --text-muted:  #6b7aaa;
+    --text-output: #1a1e2e;
+
+    /* Syntax — StackOverflow Light */
+    --syn-keyword:      #015692;
+    --syn-type:         #b75501;
+    --syn-preproc:      #015692;
+    --syn-preproc-str:  #54790d;
+    --syn-preproc-name: #b75501;
+    --syn-string:       #54790d;
+    --syn-number:       #b75501;
+    --syn-comment:      #656e77;
+    --syn-func:         rgba(0,0,255,.8);
+    --syn-op:           #2f3337;
+    --syn-plain:        #2f3337;
+
+    /* Layout */
+    --toolbar-h:    42px;
+    --status-h:     26px;
+    --gutter-w:     52px;
+    --font-editor: 'Hack Nerd Font Mono', Consolas, monospace;
+    --font-ui: 'Segoe UI', system-ui, sans-serif;
+    --line-h:       1.4;
+    --editor-fs:    22px;
+    --terminal-fs:  22px;
+}
+
+/* ════════════════════════════════════════════════════════
+   MODO STANDALONE — cterminal.html
+   html/body ocupam 100% da viewport
+═══════════════════════════════════════════════════════════ */
+html, body {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    background: var(--bg-page);
+    font-family: var(--font-ui);
+    color: var(--text-main);
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ── Grid principal standalone ── */
+#app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;   /* mobile: viewport dinâmico (barra de URL) */
+    width: 100vw;
+    width: 100dvw;
+    overflow: hidden;
+}
+
+/* Oculta elemento interno do CWasmExec */
+#cwasm-modal-label { display: none !important; }
+
+/* ════════════════════════════════════════════════════════
+   WIDGET EMBARCADO (.ct-widget)
+   O container pai define o tamanho; o widget preenche 100%.
+═══════════════════════════════════════════════════════════ */
+.ct-widget {
+    display: flex;
+    flex-direction: column;
+    width:  100%;
+    height: 100%;
+    /* min-width:0 permite o widget encolher abaixo da largura
+       intrínseca do conteúdo, respeitando o container em QUALQUER
+       layout (grid ou flex). Sem isto, dentro de um grid a coluna
+       'auto' dimensiona-se pelo conteúdo e o widget transborda na
+       horizontal. max-width:100% garante o teto no container. */
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    font-family: var(--font-ui);
+    color: var(--text-main);
+    background: var(--bg-page);
+    -webkit-font-smoothing: antialiased;
+}
+
+
+/* ════════════════════════════════════════════════════════
+   CONTAINER EMBARCADO (.cterminal)
+   É o elemento que recebe a classe no HTML e é o filho direto
+   do layout do slide (grid/flex). Precisa de min-width:0 para
+   não estourar a coluna 'auto' de um grid — sem isto, o JS mede
+   um offsetWidth já inflado e dimensiona o editor grande demais.
+═══════════════════════════════════════════════════════════ */
+.cterminal {
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+
+
+
+/* ════════════════════════════════════════════════════════
+   TOOLBAR  — vale para #toolbar (standalone) e .ct-toolbar (embarcado)
+═══════════════════════════════════════════════════════════ */
+#toolbar,
+.ct-toolbar {
+    background: var(--bg-toolbar);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 14px;
+    height: var(--toolbar-h);
+    flex-shrink: 0;
+    user-select: none;
+    border-bottom: 2px solid #002570;
+    z-index: 10;
+}
+
+#toolbar-title,
+.ct-toolbar-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #b8cfff;
+    font-size: 12px;
+    font-family: var(--font-editor);
+    letter-spacing: 0.04em;
+    margin-right: 6px;
+}
+#toolbar-title .filename,
+.ct-toolbar-title .ct-filename {
+    color: #fff;
+    font-weight: 600;
+    font-size: 13px;
+}
+#toolbar-title .lang-badge,
+.ct-toolbar-title .ct-lang-badge {
+    background: rgba(255,255,255,0.13);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 4px;
+    padding: 1px 7px;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    color: #c8daff;
+    text-transform: uppercase;
+}
+
+#toolbar-spacer { flex: 1; }
+
+/* ── Slot extra da toolbar (<template data-slot="extra">) ── */
+.ct-tb-extra {
+    display: contents;  /* filhos participam do flex da toolbar diretamente */
+}
+.ct-tb-extra:empty { display: none; }
+
+.tb-btn,
+.ct-tb-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.10);
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 5px;
+    color: #e8f0ff;
+    font-size: 12px;
+    font-family: var(--font-ui);
+    padding: 5px 12px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    white-space: nowrap;
+}
+.tb-btn:hover,
+.ct-tb-btn:hover { background: rgba(255,255,255,0.20); border-color: rgba(255,255,255,0.35); }
+.tb-btn:active,
+.ct-tb-btn:active { background: rgba(255,255,255,0.08); transform: scale(0.97); }
+.tb-btn.primary,
+.ct-tb-btn.ct-primary {
+    background: #0057e7;
+    border-color: #0047cc;
+    color: #fff;
+    font-weight: 600;
+}
+.tb-btn.primary:hover,
+.ct-tb-btn.ct-primary:hover { background: #0064ff; }
+.tb-btn.primary:disabled,
+.ct-tb-btn.ct-primary:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+.tb-btn .nf,
+.ct-tb-btn .nf { font-size: 15px; line-height: 1; }
+
+.tb-sep,
+.ct-tb-sep {
+    width: 1px;
+    height: 22px;
+    background: rgba(255,255,255,0.15);
+    margin: 0 2px;
+}
+
+/* Font size control — toolbar (fundo azul) */
+.tb-fz,
+.ct-tb-fz {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 5px;
+    overflow: hidden;
+}
+.tb-fz button,
+.ct-tb-fz button {
+    background: none;
+    border: none;
+    color: #e8f0ff;
+    font-size: 14px;
+    padding: 4px 9px;
+    cursor: pointer;
+    transition: background 0.12s;
+    line-height: 1;
+}
+.tb-fz button:hover,
+.ct-tb-fz button:hover { background: rgba(255,255,255,0.18); }
+.tb-fz span,
+.ct-tb-fz span {
+    color: #c8daff;
+    font-size: 11px;
+    font-family: var(--font-editor);
+    padding: 0 4px;
+    min-width: 28px;
+    text-align: center;
+}
+
+/* Font size control — pane-header (fundo cinza, override das cores acima) */
+.ct-editor-pane-header .ct-tb-fz {
+    background: none;
+    border-color: var(--border-mid);
+}
+.ct-editor-pane-header .ct-tb-fz button {
+    color: var(--text-muted);
+}
+.ct-editor-pane-header .ct-tb-fz button:hover {
+    background: var(--blue-light);
+    color: var(--blue);
+}
+.ct-editor-pane-header .ct-tb-fz span {
+    color: var(--text-muted);
+}
+
+/* ════════════════════════════════════════════════════════
+   WORKSPACE
+═══════════════════════════════════════════════════════════ */
+#workspace,
+.ct-workspace {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    min-height: 0;
+    min-width: 0;
+}
+
+/* ── Resizer ── */
+#resizer,
+.ct-resizer {
+    background: var(--border);
+    cursor: col-resize;
+    flex-shrink: 0;
+    transition: background 0.15s;
+    position: relative;
+}
+#resizer { width: 5px; }
+.ct-resizer { width: 5px; height: 100%; }
+#resizer::after,
+.ct-resizer::after {
+    content: '';
+    position: absolute;
+    inset: 0 -3px;
+}
+#resizer:hover, #resizer.dragging,
+.ct-resizer:hover, .ct-resizer.dragging { background: var(--blue-mid); }
+
+/* ── Editor pane ── */
+#editor-pane,
+.ct-editor-pane {
+    display: flex;
+    flex-direction: column;
+    min-width: 200px;
+    min-height: 0;        /* permite encolher em layout vertical */
+    overflow: hidden;
+    background: var(--bg-editor);
+    border-right: 1px solid var(--border);
+    flex-shrink: 0;       /* no layout horizontal, não encolhe (width é controlado) */
+}
+
+/* Em layout vertical (top/bottom), o editor-pane deve participar
+   do flex vertical e ter border-bottom em vez de border-right */
+.ct-workspace[style*="column"] .ct-editor-pane {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 1;       /* pode encolher verticalmente */
+    flex-grow: 1;         /* ocupa o espaço restante após o output-pane */
+    min-height: 0;        /* permite encolher abaixo do conteúdo intrínseco */
+    width: 100% !important; /* em layout vertical o editor deve ter largura total */
+}
+
+/* editor-scroll precisa de height:0 no modo vertical para que o flex
+   distribua corretamente e o código fique visível */
+.ct-workspace[style*="column"] .ct-editor-pane .ct-editor-scroll {
+    flex: 1;
+    min-height: 0;
+    height: 0;            /* força o flexbox a calcular a altura disponível */
+    overflow: auto;
+}
+
+#editor-pane-header,
+.ct-editor-pane-header {
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    height: 32px;
+    background: var(--bg-gutter);
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: var(--font-editor);
+    gap: 8px;
+    flex-shrink: 0;
+    user-select: none;
+    position: relative;
+}
+
+/* center container: frag-bar + font-size control */
+.ct-editor-center {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    pointer-events: auto;
+}
+#editor-pane-header .dot,
+.ct-editor-pane-header .ct-dot {
+    color: #c8d3ee;
+    flex-shrink: 0;
+}
+.ct-editor-pane-header .ct-dot .ct-icon-term {
+    font-size: 13px;
+    color: inherit;   /* herda a cor do .ct-dot pai — muda com .edited */
+}
+#editor-pane-header .dot.edited,
+.ct-editor-pane-header .ct-dot.edited { color: #f59e0b; }
+
+#editor-filename,
+.ct-editor-filename { font-weight: 600; color: var(--text-main); font-size: 12px; }
+
+/* ── File tree (multi-arquivo) ── */
+.ct-filetree-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+.ct-filetree-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px 4px;
+    font-size: 15px;
+    color: var(--accent, #0057e7);
+    display: flex;
+    align-items: center;
+    line-height: 1;
+    transition: color 0.15s;
+}
+.ct-filetree-btn:hover {
+    color: var(--blue-mid, #1251b5);
+}
+.ct-filetree-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-editor, #fff);
+    border: 1px solid var(--border, #c8d3ee);
+    border-radius: 6px;
+    box-shadow: 0 4px 16px rgba(0,0,0,.15);
+    min-width: 180px;
+    max-height: 240px;
+    overflow-y: auto;
+    padding: 4px 0;
+    margin-top: 4px;
+}
+.ct-filetree-row,
+.ct-filetree-item {
+    display: flex;
+    align-items: center;
+    background: none;
+    border: none;
+    padding: 3px 6px 3px 10px;
+    font-size: 12px;
+    font-family: var(--font-mono, 'JetBrains Mono', 'Fira Code', monospace);
+    color: var(--text-main, #1a1e2e);
+    text-align: left;
+    white-space: nowrap;
+    line-height: 1.5;
+}
+.ct-filetree-item {
+    cursor: pointer;
+    transition: background 0.1s;
+}
+.ct-filetree-item:hover {
+    background: var(--bg-gutter, #f0f2f8);
+}
+.ct-filetree-item-active {
+    font-weight: 700;
+    color: var(--accent, #0057e7);
+    background: var(--blue-pale, #f0f4ff);
+}
+.ct-filetree-dir-row {
+    color: var(--text-muted, #6b7aaa);
+    font-weight: 600;
+    cursor: default;
+}
+.ct-filetree-prefix {
+    color: var(--text-gutter, #8894b8);
+    user-select: none;
+    white-space: pre;
+}
+.ct-filetree-root {
+    font-weight: 700;
+    color: var(--text-main, #1a1e2e);
+    padding: 3px 10px 1px;
+}
+.ct-filetree-del,
+.ct-filetree-rename {
+    padding: 0 2px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 10px;
+    color: var(--text-gutter, #8894b8);
+    opacity: 0;
+    transition: opacity 0.15s, color 0.15s;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+.ct-filetree-rename {
+    margin-left: auto;
+}
+.ct-filetree-del {
+    margin-left: 4px;
+}
+.ct-filetree-item:hover .ct-filetree-del,
+.ct-filetree-item:hover .ct-filetree-rename,
+.ct-filetree-dir-row:hover .ct-filetree-del,
+.ct-filetree-dir-row:hover .ct-filetree-rename {
+    opacity: 1;
+}
+.ct-filetree-del:hover {
+    color: #e53935;
+}
+.ct-filetree-rename:hover {
+    color: var(--accent, #0057e7);
+}
+.ct-filetree-name {
+    flex: 1;
+    min-width: 0;
+}
+.ct-filetree-add-row {
+    border-top: 1px solid var(--border, #c8d3ee);
+    margin-top: 2px;
+    padding: 3px 10px;
+}
+.ct-filetree-add-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    font-family: var(--font-mono, 'JetBrains Mono', 'Fira Code', monospace);
+    color: var(--accent, #0057e7);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 0;
+}
+.ct-filetree-add-btn:hover {
+    text-decoration: underline;
+}
+.ct-filetree-input-row {
+    display: flex;
+    align-items: center;
+    padding: 3px 10px;
+    gap: 4px;
+    border-top: 1px solid var(--border, #c8d3ee);
+}
+.ct-filetree-input {
+    font-size: 12px;
+    font-family: var(--font-mono, 'JetBrains Mono', 'Fira Code', monospace);
+    border: 1px solid var(--border, #c8d3ee);
+    border-radius: 3px;
+    padding: 1px 4px;
+    flex: 1;
+    min-width: 0;
+    background: var(--bg-editor, #fff);
+    color: var(--text-main, #1a1e2e);
+}
+.ct-filetree-input-ok {
+    background: none; border: none; cursor: pointer; color: #2ecc71; font-size: 14px; line-height: 1; padding: 0 2px;
+}
+.ct-filetree-input-cancel {
+    background: none; border: none; cursor: pointer; color: #e53935; font-size: 14px; line-height: 1; padding: 0 2px;
+}
+
+#cursor-info,
+.ct-cursor-info { font-size: 11px; color: var(--text-muted); }
+
+/* frag-bar */
+#frag-bar,
+.ct-frag-bar {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    background: rgba(0,56,147,0.08);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+}
+#frag-bar button,
+.ct-frag-bar button {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 15px;
+    line-height: 1;
+    padding: 2px 7px;
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s;
+}
+#frag-bar button:hover:not(:disabled),
+.ct-frag-bar button:hover:not(:disabled) { background: var(--blue-light); color: var(--blue); }
+#frag-bar button:disabled,
+.ct-frag-bar button:disabled { opacity: 0.3; cursor: default; }
+#frag-label,
+.ct-frag-bar span {
+    font-size: 11px;
+    font-family: var(--font-editor);
+    color: var(--text-muted);
+    padding: 0 4px;
+    min-width: 32px;
+    text-align: center;
+    user-select: none;
+}
+
+/* ── Editor scroll ── */
+#editor-scroll,
+.ct-editor-scroll {
+    flex: 1;
+    overflow: auto;
+    position: relative;
+    min-height: 0;
+    min-width: 0;
+}
+
+/* ── Code area ── */
+#code-area,
+.ct-code-area {
+    display: flex;
+    position: relative;
+}
+
+/* ── Gutter ── */
+#gutter,
+.ct-gutter {
+    width: var(--gutter-w);
+    flex-shrink: 0;
+    background: var(--bg-gutter);
+    border-right: 1px solid var(--border);
+    padding: 12px 0;
+    text-align: right;
+    font-family: var(--font-editor);
+    font-size: var(--editor-fs);
+    line-height: var(--line-h);
+    color: var(--text-gutter);
+    user-select: none;
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    overflow: visible;      /* scroll nativo do editorScroll, sem sync via JS */
+    align-self: flex-start; /* não estica verticalmente — altura definida pelo JS */
+}
+.gutter-line {
+    padding: 0 10px 0 4px;
+    display: block;
+    height: calc(var(--editor-fs) * var(--line-h));
+    transition: color 0.1s;
+}
+.gutter-line.active { color: var(--blue); font-weight: 600; }
+
+/* ── code-inner ── */
+#code-inner,
+.ct-code-inner {
+    flex: 1;
+    position: relative;
+    min-width: 0;
+}
+
+/* ── Highlight layer ── */
+#highlight-layer,
+.ct-highlight-layer {
+    position: absolute;
+    inset: 0;
+    padding: 12px 16px 12px 12px;
+    font-family: var(--font-editor);
+    font-size: var(--editor-fs);
+    line-height: var(--line-h);
+    white-space: pre;
+    word-wrap: normal;
+    overflow: hidden;
+    pointer-events: none;
+    color: var(--syn-plain);
+    tab-size: 4;
+    -moz-tab-size: 4;
+}
+
+/* ── Textarea ── */
+#code-input,
+.ct-code-input {
+    position: absolute;
+    inset: 0;
+    padding: 12px 16px 12px 12px;
+    font-family: var(--font-editor);
+    font-size: var(--editor-fs);
+    line-height: var(--line-h);
+    white-space: pre;
+    word-wrap: normal;
+    overflow: hidden;
+    border: none;
+    outline: none;
+    resize: none;
+    background: transparent;
+    color: transparent;
+    caret-color: var(--blue);
+    tab-size: 4;
+    -moz-tab-size: 4;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+/* Seleção: o texto do <textarea> é transparente (a cor visível vem da
+   highlight-layer abaixo). Por padrão o browser repinta o texto selecionado
+   com a cor de seleção do sistema (escura), revelando uma "cópia fantasma"
+   desalinhada do código. Forçamos o texto selecionado a permanecer
+   transparente e mostramos apenas um fundo de seleção legível, que se
+   sobrepõe à camada colorida — assim vê-se claramente o que está selecionado
+   sem alterar o que é renderizado. */
+#code-input::selection,
+.ct-code-input::selection {
+    background: rgba(0,86,224,0.28);
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+}
+#code-input::-moz-selection,
+.ct-code-input::-moz-selection {
+    background: rgba(0,86,224,0.28);
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+}
+/* Espelha a mesma seleção na highlight-layer para reforçar o realce visual
+   (o texto colorido sob a seleção fica levemente destacado, mas legível). */
+.ct-highlight-layer ::selection   { background: rgba(0,86,224,0.28); }
+.ct-highlight-layer ::-moz-selection { background: rgba(0,86,224,0.28); }
+
+#editor-scroll::-webkit-scrollbar,
+.ct-editor-scroll::-webkit-scrollbar,
+#code-input::-webkit-scrollbar,
+.ct-code-input::-webkit-scrollbar { display: none; }
+
+/* ════════════════════════════════════════════════════════
+   OUTPUT PANE
+═══════════════════════════════════════════════════════════ */
+#output-pane,
+.ct-output-pane {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 160px;
+    min-height: 0;        /* essencial: permite que o scroll interno funcione */
+    overflow: hidden;
+    background: var(--bg-output);
+}
+
+#output-pane-header,
+.ct-output-pane-header {
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    height: 32px;
+    background: var(--bg-gutter);
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--text-muted);
+    gap: 8px;
+    flex-shrink: 0;
+    user-select: none;
+}
+
+/* 3-zone layout: left | center | right */
+.ct-output-left {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.ct-output-center {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.ct-output-right {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+#output-pane-header .icon-term,
+.ct-output-pane-header .ct-icon-term { font-size: 14px; color: var(--blue); }
+
+.out-btn,
+.ct-out-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: none;
+    border: 1px solid var(--border-mid);
+    border-radius: 4px;
+    color: var(--text-muted);
+    font-size: 11px;
+    padding: 2px 8px;
+    cursor: pointer;
+    font-family: var(--font-ui);
+    transition: border-color 0.12s, color 0.12s;
+}
+.out-btn:hover,
+.ct-out-btn:hover { border-color: var(--blue); color: var(--blue); }
+.out-btn .nf,
+.ct-out-btn .nf { font-size: 13px; }
+
+/* Terminal font size control */
+.out-fz,
+.ct-out-fz {
+    display: flex;
+    align-items: center;
+    background: none;
+    border: 1px solid var(--border-mid);
+    border-radius: 4px;
+    overflow: hidden;
+}
+.out-fz button,
+.ct-out-fz button {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 13px;
+    padding: 2px 7px;
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s;
+    line-height: 1;
+}
+.out-fz button:hover,
+.ct-out-fz button:hover { background: var(--blue-light); color: var(--blue); }
+.out-fz span,
+.ct-out-fz span {
+    color: var(--text-muted);
+    font-size: 11px;
+    font-family: var(--font-editor);
+    padding: 0 3px;
+    min-width: 24px;
+    text-align: center;
+}
+
+#output-scroll,
+.ct-output-scroll {
+    flex: 1;
+    overflow: auto;       /* scroll vertical e horizontal */
+    padding: 14px 18px 18px;
+    min-height: 0;        /* crítico: sem isto o flex child ignora o overflow */
+    min-width: 0;
+    outline: none;        /* sem borda de foco — tabindex=0 apenas para capturar Alt+= */
+}
+
+#console-out,
+.ct-console-out {
+    font-family: var(--font-editor);
+    font-size: var(--terminal-fs);
+    line-height: 1.65;
+    color: var(--text-output);
+    white-space: pre;     /* preserva formatação; scroll horizontal para linhas longas */
+    word-break: normal;
+    min-width: max-content; /* garante scroll horizontal quando necessário */
+}
+#console-out:empty::before,
+.ct-console-out:empty::before {
+    content: '▸ Press Compile & Run to run the code.';
+    color: #b0bcdc;
+    font-style: italic;
+}
+
+.out-log  { color: #8894b8; }
+.out-warn { color: #c97a00; }
+.out-err  { color: #cc2222; font-weight: 600; }
+.out-ok   { color: #1a7a3c; }
+
+/* ════════════════════════════════════════════════════════
+   STATUS BAR
+═══════════════════════════════════════════════════════════ */
+#statusbar,
+.ct-statusbar {
+    height: var(--status-h);
+    background: var(--blue);
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    gap: 16px;
+    font-size: 11px;
+    font-family: var(--font-editor);
+    color: #b8cfff;
+    user-select: none;
+    border-top: 1px solid #002570;
+    flex-shrink: 0;
+}
+#statusbar .sb-item,
+.ct-statusbar .ct-sb-item { display: flex; align-items: center; gap: 5px; }
+#statusbar .sb-sep,
+.ct-statusbar .ct-sb-sep  { width: 1px; height: 14px; background: rgba(255,255,255,0.15); }
+#status-msg { margin-left: auto; }
+[id$="-status-msg"] { margin-left: auto; }
+
+/* ════════════════════════════════════════════════════════
+   FRAGMENTOS DE LINHA (data-line-numbers)
+═══════════════════════════════════════════════════════════ */
+.hl-line {
+    display: block;
+    transition: opacity 0.2s;
+    background-size: 100% calc(var(--editor-fs) * var(--line-h));
+    background-repeat: no-repeat;
+    background-position: left center;
+}
+.hl-line.hl-dim   { opacity: 0.2; }
+.gutter-line.hl-dim { opacity: 0.2; }
+
+/* ════════════════════════════════════════════════════════
+   SYNTAX TOKENS
+═══════════════════════════════════════════════════════════ */
+.tk-kw       { color: var(--syn-keyword);      font-weight: 600; }
+.tk-type     { color: var(--syn-type); }
+.tk-pre      { color: var(--syn-preproc); }
+.tk-pre-str  { color: var(--syn-preproc-str); }
+.tk-pre-name { color: var(--syn-preproc-name); }
+.tk-str      { color: var(--syn-string); }
+.tk-num      { color: var(--syn-number); }
+.tk-cmt      { color: var(--syn-comment); font-style: italic; }
+.tk-fn       { color: var(--syn-func); }
+.tk-op       { color: var(--syn-op); }
+
+/* ════════════════════════════════════════════════════════
+   MODO EMBARCADO em slides (Reveal.js)
+   .ct-slide-container preenche 100% do pai — qualquer que
+   seja ele. O pai deve ter altura definida (via CSS da
+   aplicação, como .containerflexcenter). Nenhum height
+   inline é definido pelo JS.
+═══════════════════════════════════════════════════════════ */
+.ct-slide-container {
+    width:    100%;
+    height:   100%;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.ct-slide-container .ct-widget {
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+}
+
+/* ════════════════════════════════════════════════════════
+   DRAG-TO-SNAP — handles e zonas de encaixe
+═══════════════════════════════════════════════════════════ */
+
+/* Handle de arrasto nos headers dos painéis */
+.ct-drag-handle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 4px;
+    cursor: grab;
+    color: var(--text-muted);
+    opacity: 0.5;
+    transition: opacity 0.15s, background 0.15s, color 0.15s;
+    flex-shrink: 0;
+    font-size: 13px;
+    user-select: none;
+    margin-right: 4px;
+}
+.ct-drag-handle:hover {
+    opacity: 1;
+    background: var(--blue-light);
+    color: var(--blue);
+}
+.ct-drag-handle:active { cursor: grabbing; }
+
+/* Ghost — cópia semitransparente que segue o mouse */
+.ct-drag-ghost {
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.82;
+    border-radius: 8px;
+    box-shadow: 0 8px 32px rgba(0,56,147,0.22), 0 2px 8px rgba(0,0,0,0.15);
+    border: 2px solid var(--blue-mid);
+    overflow: hidden;
+    transition: box-shadow 0.1s;
+    background: var(--bg-editor);
+}
+.ct-drag-ghost.snapping {
+    box-shadow: 0 0 0 3px var(--blue-mid), 0 8px 32px rgba(0,56,147,0.3);
+}
+
+/* Zonas de snap — overlay sobre o workspace durante o drag */
+.ct-snap-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 100;
+}
+.ct-snap-zone {
+    position: absolute;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.15s, background 0.15s;
+    opacity: 0;
+}
+/* Ícone central de cada zona */
+.ct-snap-zone::after {
+    content: '';
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--blue-mid);
+    opacity: 0;
+    transition: opacity 0.15s, transform 0.15s;
+    transform: scale(0.7);
+}
+.ct-snap-zone.active {
+    opacity: 1;
+    background: rgba(0,87,231,0.12);
+}
+.ct-snap-zone.active::after {
+    opacity: 1;
+    transform: scale(1);
+}
+/* Zonas nas 4 bordas */
+.ct-snap-zone[data-zone="left"]   { left:0;   top:0; width:22%; height:100%; border-right: 2px dashed transparent; }
+.ct-snap-zone[data-zone="right"]  { right:0;  top:0; width:22%; height:100%; border-left:  2px dashed transparent; }
+.ct-snap-zone[data-zone="top"]    { top:0;    left:0; width:100%; height:22%; border-bottom:2px dashed transparent; }
+.ct-snap-zone[data-zone="bottom"] { bottom:0; left:0; width:100%; height:22%; border-top:   2px dashed transparent; }
+.ct-snap-zone.hover[data-zone="left"]   { border-right-color:  var(--blue-mid); background: rgba(0,87,231,0.18); }
+.ct-snap-zone.hover[data-zone="right"]  { border-left-color:   var(--blue-mid); background: rgba(0,87,231,0.18); }
+.ct-snap-zone.hover[data-zone="top"]    { border-bottom-color: var(--blue-mid); background: rgba(0,87,231,0.18); }
+.ct-snap-zone.hover[data-zone="bottom"] { border-top-color:    var(--blue-mid); background: rgba(0,87,231,0.18); }
+
+/* Tooltip de zona */
+.ct-snap-zone-label {
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%,-50%);
+    background: var(--blue-mid);
+    color: #fff;
+    font-size: 11px;
+    font-family: var(--font-ui);
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.15s;
+    pointer-events: none;
+    letter-spacing: 0.04em;
+}
+.ct-snap-zone.hover .ct-snap-zone-label { opacity: 1; }
+
+/* Indicador de posição no header do painel durante drag */
+.ct-pane-dragging {
+    outline: 2px solid var(--blue-mid);
+    outline-offset: -2px;
+}
+
+/* ════════════════════════════════════════════════════════
+   SCROLLBARS GLOBAIS
+═══════════════════════════════════════════════════════════ */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #c8d3ee; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #a0b0d8; }
+
+/* ════════════════════════════════════════════════════════
+   HOURGLASS / SPINNER ANIMATIONS
+═══════════════════════════════════════════════════════════ */
+.ct-spinner {
+    display: inline-block;
+    animation: ct-spin 1s linear infinite;
+}
+@keyframes ct-spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+/* ════════════════════════════════════════════════════════
+   SHORTCUTS MODAL (popup flutuante ancorado no body)
+═══════════════════════════════════════════════════════════ */
+.ct-shortcuts-modal {
+    background: var(--bg-editor);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    min-width: 380px;
+    max-width: 480px;
+    box-shadow: 0 8px 32px rgba(0,56,147,.15), 0 2px 8px rgba(0,0,0,.10);
+    overflow: hidden;
+    font-family: var(--font-ui);
+}
+.ct-shortcuts-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: var(--bg-toolbar);
+    border-bottom: 2px solid #002570;
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: 0.04em;
+}
+.ct-shortcuts-close {
+    background: transparent;
+    border: none;
+    color: #b8cfff;
+    font-size: 15px;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    line-height: 1;
+    transition: background 0.15s, color 0.15s;
+}
+.ct-shortcuts-close:hover { background: rgba(255,255,255,0.18); color: #fff; }
+.ct-shortcuts-body { padding: 16px; background: var(--bg-editor); }
+.ct-shortcuts-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    color: var(--text-main);
+}
+.ct-shortcuts-table tr + tr td    { border-top: 1px solid var(--border); }
+.ct-shortcuts-table tr:hover td   { background: var(--blue-pale); }
+.ct-shortcuts-table td            { padding: 7px 8px; vertical-align: middle; }
+.ct-shortcuts-table td:first-child { white-space: nowrap; padding-right: 20px; }
+.ct-shortcuts-table td:last-child  { color: var(--text-muted); }
+.ct-shortcuts-table tr.ct-shortcuts-sep td { padding: 2px 0; }
+.ct-shortcuts-table kbd {
+    display: inline-block;
+    background: var(--bg-gutter);
+    border: 1px solid var(--border-mid);
+    border-radius: 4px;
+    padding: 1px 7px;
+    font-size: 11px;
+    font-family: var(--font-editor);
+    color: var(--blue);
+    font-weight: 600;
+    box-shadow: 0 2px 0 var(--border);
+    margin: 0 1px;
+}
+.ct-shortcuts-note {
+    margin: 12px 0 0;
+    font-size: 11px;
+    color: var(--text-muted);
+    text-align: right;
+}
+.ct-shortcuts-note kbd {
+    display: inline-block;
+    background: var(--bg-gutter);
+    border: 1px solid var(--border-mid);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: 10px;
+    font-family: var(--font-editor);
+    color: var(--blue);
+    font-weight: 600;
+    box-shadow: 0 2px 0 var(--border);
+}
+
+/* ════════════════════════════════════════════════════════
+   DATA-FULLSCREEN
+   O container não tem altura fixada pelo JS — cresce para
+   preencher o espaço disponível (ex: height:100% do slide).
+   O ct-widget ocupa 100% e o editor-pane usa flex:1 para
+   tomar todo o espaço restante após toolbar e statusbar.
+═══════════════════════════════════════════════════════════ */
+.cterminal[data-fullscreen] {
+    height: 100%;
+    max-height: none !important;
+    min-height: 0 !important;
+}
+.cterminal[data-fullscreen] .ct-widget {
+    height: 100%;
+}
+/* Layout vertical (top/bottom): editor-pane cresce para preencher */
+.cterminal[data-fullscreen] .ct-workspace[style*="column"] .ct-editor-pane {
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
+}
+/* Layout horizontal (left/right): JS controla a largura via style.width;
+   flex-shrink:0 garante que o width do JS não seja sobrescrito pelo flexbox */
+.cterminal[data-fullscreen] .ct-workspace:not([style*="column"]) .ct-editor-pane {
+    flex-shrink: 0;
+    flex-grow: 0;
+    min-height: 0;
+    min-width: 0;
+}
+.cterminal[data-fullscreen] .ct-editor-scroll {
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
+}
+
+/* ════════════════════════════════════════════════════════
+   MOBILE
+   IMPORTANTE: estas regras valem APENAS para o modo
+   standalone (#app / seletores por ID). Widgets embarcados
+   em slides do Reveal.js (.ct-*) são escalados junto com o
+   slide (transform: scale) e NÃO devem receber unidades de
+   viewport (55vh dentro de um slide escalado ≈ 1800px em
+   coordenadas de slide) nem mudança de direção do layout.
+═══════════════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+    #app { --editor-fs: 16px; --terminal-fs: 16px; --gutter-w: 40px; }
+    #workspace { flex-direction: column; }
+    #resizer { display: none; }
+    #editor-pane { flex-shrink: 0; height: 55vh; height: 55dvh; }
+    #output-pane { flex: 1; }
+    #app .tb-btn span,
+    #app .ct-tb-btn span { display: none; }
+    #toolbar-title .lang-badge,
+    #app .ct-toolbar-title .ct-lang-badge { display: none; }
+}
