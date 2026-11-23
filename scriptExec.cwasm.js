@@ -795,61 +795,18 @@
         _singleton.awaitingStdin = false;
     }
 
-    /**
-     * Silence watchdog: detects end of execution even when the worker does
-     * not emit 'done' (behavior of some wasm-clang builds). Uses an
-     * independent flag instead of replacing port.onmessage, avoiding
-     * handler chaining across consecutive runs.
-     */
-    function _watchForCompletion() {
-        /* Flag local to this run; incremented on each received message */
-        const jobId     = ++_singleton._watchJobId;
-        let   msgCount  = 0;
-
-        /* Intercepts the message count without replacing the main handler */
-        const _origOnMsg = _singleton.port.onmessage;
-        _singleton.port.onmessage = function (event) {
-            msgCount++;
-            _origOnMsg(event);
-        };
-
-        const SILENCE_MS  = 800;
-        const CHECK_DELAY = 200;
-        const START_AFTER = 500;
-        const startTime   = Date.now();
-        let   lastCount   = 0;
-        let   lastChange  = Date.now();
-
-        function check() {
-            /* Job already finished by 'done' or belongs to another run? */
-            if (!_singleton.busy || !_singleton.current) return;
-            if (_singleton._watchJobId !== jobId) return;
-
-            /* stdin modal open: the worker is blocked on purpose waiting
-               for the user to type, not hung. Don't count it as silence —
-               reset the clock on each check until it resolves. */
-            if (_singleton.awaitingStdin) {
-                lastChange = Date.now();
-                setTimeout(check, CHECK_DELAY);
-                return;
-            }
-
-            if (msgCount !== lastCount) {
-                lastCount  = msgCount;
-                lastChange = Date.now();
-            }
-
-            const elapsed   = Date.now() - startTime;
-            const silentFor = Date.now() - lastChange;
-            if (elapsed > START_AFTER && silentFor > SILENCE_MS) {
-                _onJobDone();
-                return;
-            }
-            setTimeout(check, CHECK_DELAY);
-        }
-
-        setTimeout(check, START_AFTER + CHECK_DELAY);
-    }
+    /* [Removed] Silence watchdog.
+       Job completion is driven solely by the worker's real 'done' message
+       (see the 'done' case in _handleSingletonMessage → _onJobDone). Our
+       worker ALWAYS emits 'done' — on success, on a compile error, and on a
+       panic (the compileLinkRun .catch calls finish()). The old 800 ms-silence
+       heuristic was copied from binji's wasm-clang (which did not reliably emit
+       'done'); for our worker it only raced the download and the silent
+       WebAssembly.compile phase, aborting jobs unpredictably across browsers
+       (Firefox aborted right after the download finished; Chrome aborted
+       before it even started). Genuine hangs — e.g. an infinite loop that
+       never returns and so never emits 'done' — are caught by cterminal's run
+       timeout (which resets on download progress). */
 
     /**
      * Processes the next job in the queue (if the worker is free).
@@ -903,8 +860,7 @@
         };
         if (job.files) msg.files = job.files;
         _singleton.port.postMessage(msg);
-
-        _watchForCompletion();
+        /* No silence watchdog — completion comes from the worker's 'done'. */
     }
 
     /**
